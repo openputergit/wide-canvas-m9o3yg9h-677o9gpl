@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafePost - A Safe Social Media Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #FEF6E4;
+        }
+        .neubrutalism {
+            border: 3px solid #000;
+            box-shadow: 8px 8px 0px #000;
+            transition: all 0.2s ease;
+            border-radius: 0;
+        }
+        .neubrutalism:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 10px 10px 0px #000;
+        }
+        .neubrutalism:active {
+            transform: translate(2px, 2px);
+            box-shadow: 6px 6px 0px #000;
+        }
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+        #imagePreview, #profileImagePreview {
+            max-width: 300px;
+            max-height: 300px;
+            object-fit: contain;
+        }
+        .btn-primary {
+            background-color: #F582AE;
+            color: #001858;
+        }
+        .btn-secondary {
+            background-color: #8BD3DD;
+            color: #001858;
+        }
+        .btn-danger {
+            background-color: #F45866;
+            color: white;
+        }
+        .btn-success {
+            background-color: #6FD08C;
+            color: #001858;
+        }
+        .text-primary {
+            color: #001858;
+        }
+        nav {
+            background-color: #F582AE;
+            color: #001858;
+        }
+        .post-container {
+            background-color: #FFFFFF;
+            border: 3px solid #001858;
+            box-shadow: 8px 8px 0px #001858;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="loading bg-white p-4 rounded-lg neubrutalism">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <p class="mt-2">Processing...</p>
+    </div>
+
+    <!-- Auth Container -->
+    <div id="authContainer" class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto bg-white p-8 neubrutalism">
+            <h1 class="text-3xl font-bold mb-6 text-center text-primary">SafePost</h1>
+            <p class="text-center mb-4">A safe social media platform for everyone</p>
+            <div id="loginForm">
+                <h2 class="text-2xl mb-4 text-primary">Login</h2>
+                <input type="text" id="loginUsername" placeholder="Username" class="w-full mb-3 p-3 neubrutalism">
+                <input type="password" id="loginPassword" placeholder="Password" class="w-full mb-3 p-3 neubrutalism">
+                <button onclick="login()" class="w-full btn-primary p-3 mb-3 neubrutalism font-bold">Login</button>
+                <p class="text-center">Don't have an account? <a href="#" onclick="toggleAuth()" class="text-blue-500 font-bold">Register</a></p>
+            </div>
+            <div id="registerForm" class="hidden">
+                <h2 class="text-2xl mb-4 text-primary">Register</h2>
+                <input type="text" id="regUsername" placeholder="Username" class="w-full mb-3 p-3 neubrutalism">
+                <input type="password" id="regPassword" placeholder="Password" class="w-full mb-3 p-3 neubrutalism">
+                <input type="text" id="regEmail" placeholder="Email" class="w-full mb-3 p-3 neubrutalism">
+                <div class="mb-3">
+                    <label class="block mb-2">Profile Picture</label>
+                    <input type="file" id="profilePicUpload" accept="image/*" class="mb-2">
+                    <img id="profileImagePreview" class="hidden mb-2 neubrutalism">
+                </div>
+                <button onclick="register()" class="w-full btn-success p-3 mb-3 neubrutalism font-bold">Register</button>
+                <p class="text-center">Already have an account? <a href="#" onclick="toggleAuth()" class="text-blue-500 font-bold">Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="appContainer" class="hidden">
+        <!-- Navigation -->
+        <nav class="border-b-2 border-black p-4 sticky top-0 z-10">
+            <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+                <h1 class="text-2xl font-bold mb-2 md:mb-0">SafePost</h1>
+                <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
+                    <div class="relative w-full md:w-64">
+                        <input type="text" id="searchUser" placeholder="Search users..." class="p-2 pr-8 w-full neubrutalism">
+                        <span class="absolute right-3 top-2.5"><i class="bi bi-search"></i></span>
+                        <div id="searchResults" class="absolute w-full mt-1 bg-white neubrutalism hidden z-20">
+                            <!-- Search results will be shown here -->
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 w-full md:w-auto">
+                        <button onclick="showCreatePost()" class="btn-primary p-2 neubrutalism flex-1 md:flex-none">
+                            <i class="bi bi-plus-lg"></i> Create Post
+                        </button>
+                        <button onclick="showProfile()" class="btn-secondary p-2 neubrutalism flex-1 md:flex-none">
+                            <i class="bi bi-person-circle"></i> Profile
+                        </button>
+                        <button onclick="logout()" class="btn-danger p-2 neubrutalism flex-1 md:flex-none">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container mx-auto px-4 py-8">
+            <!-- Create Post Modal -->
+            <div id="createPostModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20 p-4">
+                <div class="bg-white p-8 neubrutalism max-w-lg w-full">
+                    <h2 class="text-2xl mb-4 text-primary">Create Post</h2>
+                    <textarea id="postContent" placeholder="What's on your mind?" class="w-full p-3 mb-4 h-32 neubrutalism"></textarea>
+                    <div class="mb-4">
+                        <label class="block mb-2">Upload Media</label>
+                        <input type="file" id="mediaUpload" accept="image/*,video/*" class="mb-2">
+                        <img id="imagePreview" class="hidden mb-2 neubrutalism">
+                    </div>
+                    <div class="flex justify-end space-x-4">
+                        <button onclick="closeCreatePost()" class="bg-gray-200 p-3 neubrutalism">Cancel</button>
+                        <button onclick="createPost()" class="btn-primary p-3 neubrutalism">Post</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Modal -->
+            <div id="profileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20 p-4">
+                <div class="bg-white p-8 neubrutalism max-w-lg w-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl text-primary">Your Profile</h2>
+                        <button onclick="closeProfile()" class="text-gray-500">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-col items-center mb-4">
+                        <img id="currentProfilePic" src="https://via.placeholder.com/150" alt="Profile" class="w-24 h-24 rounded-full neubrutalism object-cover mb-4">
+                        <button onclick="showUpdateProfilePic()" class="btn-secondary p-2 neubrutalism">
+                            <i class="bi bi-camera"></i> Update Profile Picture
+                        </button>
+                    </div>
+                    <div id="updateProfilePicForm" class="hidden mb-4">
+                        <input type="file" id="newProfilePic" accept="image/*" class="mb-2">
+                        <img id="newProfilePicPreview" class="hidden mb-2 w-full h-32 object-cover neubrutalism">
+                        <button onclick="updateProfilePic()" class="btn-primary p-2 neubrutalism">
+                            Save Picture
+                        </button>
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="font-bold mb-2">Username:</h3>
+                        <p id="profileUsername" class="mb-2"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-center neubrutalism p-4">
+                            <p class="text-lg font-bold" id="followerCount">0</p>
+                            <p>Followers</p>
+                        </div>
+                        <div class="text-center neubrutalism p-4">
+                            <p class="text-lg font-bold" id="followingCount">0</p>
+                            <p>Following</p>
+                        </div>
+                    </div>
+                    <h3 class="font-bold mb-2">Your Posts</h3>
+                    <div id="userPosts" class="grid grid-cols-1 gap-4">
+                        <!-- User posts will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Profile Modal -->
+            <div id="userProfileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20 p-4">
+                <div class="bg-white p-8 neubrutalism max-w-lg w-full max-h-screen overflow-y-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl text-primary" id="userProfileName">User Profile</h2>
+                        <button onclick="closeUserProfile()" class="text-gray-500">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-col items-center mb-4">
+                        <img id="userProfilePic" src="https://via.placeholder.com/150" alt="Profile" class="w-24 h-24 rounded-full neubrutalism object-cover mb-4">
+                        <button id="followToggleBtn" onclick="toggleFollow()" class="btn-primary p-2 neubrutalism">
+                            Follow
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-center neubrutalism p-4">
+                            <p class="text-lg font-bold" id="userFollowerCount">0</p>
+                            <p>Followers</p>
+                        </div>
+                        <div class="text-center neubrutalism p-4">
+                            <p class="text-lg font-bold" id="userFollowingCount">0</p>
+                            <p>Following</p>
+                        </div>
+                    </div>
+                    <h3 class="font-bold mb-2">Posts</h3>
+                    <div id="viewedUserPosts" class="grid grid-cols-1 gap-4">
+                        <!-- User posts will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feed -->
+            <div id="feed" class="grid grid-cols-1 gap-8 max-w-2xl mx-auto">
+                <!-- Posts will be dynamically added here -->
+                <div class="text-center p-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                    <p>Loading posts...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        const appSlug = 'safepost-app-123456';
+        let currentViewedUser = null;
+        
+        // Show loading animation
+        function showLoading() {
+            document.querySelector('.loading').style.display = 'block';
+        }
+
+        // Hide loading animation
+        function hideLoading() {
+            document.querySelector('.loading').style.display = 'none';
+        }
+
+        // Auth Functions
+        async function login() {
+            showLoading();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                alert('Please enter both username and password');
+                hideLoading();
+                return;
+            }
+
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'users',
+                        conditions: { username, password }
+                    })
+                });
+
+                const data = await response.json();
+                if (data.result && data.result.length > 0) {
+                    currentUser = data.result[0];
+                    document.getElementById('authContainer').classList.add('hidden');
+                    document.getElementById('appContainer').classList.remove('hidden');
+                    document.getElementById('profileUsername').textContent = currentUser.username;
+                    
+                    if (currentUser.profilePicture) {
+                        document.getElementById('currentProfilePic').src = currentUser.profilePicture;
+                    }
+                    
+                    loadFeed();
+                } else {
+                    alert('Invalid credentials');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('An error occurred during login. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function register() {
+            showLoading();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const email = document.getElementById('regEmail').value;
+            const profilePicFile = document.getElementById('profilePicUpload').files[0];
+
+            if (!username || !password || !email) {
+                alert('Please fill all required fields');
+                hideLoading();
+                return;
+            }
+
+            // Check username length
+            if (username.length < 3) {
+                alert('Username should be at least 3 characters long');
+                hideLoading();
+                return;
+            }
+
+            try {
+                // Check if username exists
+                const checkUser = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'users',
+                        conditions: { username }
+                    })
+                });
+
+                const existingUser = await checkUser.json();
+                if (existingUser.result && existingUser.result.length > 0) {
+                    alert('Username already exists');
+                    hideLoading();
+                    return;
+                }
+
+                let profilePicUrl = '';
+                
+                // Upload profile picture if provided
+                if (profilePicFile) {
+                    const formData = new FormData();
+                    formData.append('file', profilePicFile);
+                    formData.append('userId', username);
+                    formData.append('appSlug', appSlug);
+
+                    const uploadResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/storage/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2'
+                        },
+                        body: formData
+                    });
+
+                    const uploadData = await uploadResponse.json();
+                    if (uploadData.success) {
+                        profilePicUrl = uploadData.url;
+                    }
+                }
+
+                // Create user in database
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'create',
+                        collection: 'users',
+                        data: {
+                            username,
+                            password,
+                            email,
+                            profilePicture: profilePicUrl,
+                            followers: [],
+                            following: [],
+                            createdAt: new Date().toISOString()
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Registration successful! Please login.');
+                    toggleAuth();
+                    document.getElementById('regUsername').value = '';
+                    document.getElementById('regPassword').value = '';
+                    document.getElementById('regEmail').value = '';
+                    document.getElementById('profilePicUpload').value = '';
+                    document.getElementById('profileImagePreview').classList.add('hidden');
+                } else {
+                    alert('Registration failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('An error occurred during registration. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function createPost() {
+            showLoading();
+            const content = document.getElementById('postContent').value;
+            const mediaFile = document.getElementById('mediaUpload').files[0];
+            
+            if (!content && !mediaFile) {
+                alert('Please add some content or media to your post');
+                hideLoading();
+                return;
+            }
+
+            try {
+                let mediaUrl = '';
+
+                if (mediaFile) {
+                    const formData = new FormData();
+                    formData.append('file', mediaFile);
+                    formData.append('userId', currentUser.username);
+                    formData.append('appSlug', appSlug);
+
+                    const uploadResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/storage/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2'
+                        },
+                        body: formData
+                    });
+
+                    const uploadData = await uploadResponse.json();
+                    if (uploadData.success) {
+                        mediaUrl = uploadData.url;
+
+                        // Check for inappropriate content
+                        const aiResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                messages: [{
+                                    role: "user",
+                                    content: [{
+                                        type: "text",
+                                        text: "Check if this image contains any inappropriate content, nudity, violence, or harmful material. Respond only with 'appropriate' if the image is safe, or describe briefly what inappropriate content is detected."
+                                    }, {
+                                        type: "image_url",
+                                        image_url: { url: mediaUrl }
+                                    }]
+                                }]
+                            })
+                        });
+
+                        const aiData = await aiResponse.json();
+                        const aiMessage = aiData.message.toLowerCase();
+                        
+                        if (aiMessage.includes('inappropriate') || 
+                            aiMessage.includes('nudity') || 
+                            aiMessage.includes('violence') ||
+                            aiMessage.includes('harmful') ||
+                            aiMessage.includes('explicit')) {
+                            alert('Warning: Inappropriate content detected. Post cannot be published.');
+                            hideLoading();
+                            return;
+                        }
+                    }
+                }
+
+                // Also check text content for harmful language
+                if (content) {
+                    const contentCheckResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            messages: [{
+                                role: "user",
+                                content: [{
+                                    type: "text",
+                                    text: `Check if this text contains harmful, inappropriate, or offensive content: "${content}". Respond only with 'appropriate' if the text is safe, or describe what inappropriate content is detected.`
+                                }]
+                            }]
+                        })
+                    });
+
+                    const contentCheckData = await contentCheckResponse.json();
+                    const contentCheckMessage = contentCheckData.message.toLowerCase();
+                    
+                    if (contentCheckMessage !== 'appropriate' && 
+                        (contentCheckMessage.includes('inappropriate') || 
+                        contentCheckMessage.includes('harmful') || 
+                        contentCheckMessage.includes('offensive'))) {
+                        alert('Warning: Inappropriate language detected. Post cannot be published.');
+                        hideLoading();
+                        return;
+                    }
+                }
+
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'create',
+                        collection: 'posts',
+                        data: {
+                            content,
+                            mediaUrl,
+                            username: currentUser.username,
+                            timestamp: new Date().toISOString(),
+                            likes: [],
+                            comments: []
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    closeCreatePost();
+                    loadFeed();
+                } else {
+                    alert('Failed to create post. Please try again.');
+                }
+            } catch (error) {
+                console.error('Create post error:', error);
+                alert('An error occurred. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadFeed() {
+            showLoading();
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'posts'
+                    })
+                });
+
+                const data = await response.json();
+                const feed = document.getElementById('feed');
+                feed.innerHTML = '';
+
+                if (data.result && data.result.length > 0) {
+                    // Sort posts by timestamp (newest first)
+                    data.result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    for (const post of data.result) {
+                        await renderPost(post, feed);
+                    }
+                } else {
+                    feed.innerHTML = `
+                        <div class="bg-white p-8 neubrutalism text-center">
+                            <p class="text-xl">No posts yet. Be the first to post something!</p>
+                            <button onclick="showCreatePost()" class="mt-4 btn-primary p-3 neubrutalism">
+                                <i class="bi bi-plus-lg"></i> Create Post
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Load feed error:', error);
+                document.getElementById('feed').innerHTML = `
+                    <div class="bg-white p-8 neubrutalism text-center">
+                        <p class="text-xl text-red-500">Failed to load posts. Please try again.</p>
+                        <button onclick="loadFeed()" class="mt-4 btn-primary p-3 neubrutalism">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function renderPost(post, container) {
+            try {
+                // Get user profile pic
+                const userResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'users',
+                        conditions: { username: post.username }
+                    })
+                });
+
+                const userData = await userResponse.json();
+                const user = userData.result && userData.result.length > 0 ? userData.result[0] : null;
+                const profilePic = user && user.profilePicture ? user.profilePicture : 'https://via.placeholder.com/150';
+
+                const postElement = document.createElement('div');
+                postElement.className = 'post-container p-6';
+                
+                let mediaContent = '';
+                if (post.mediaUrl) {
+                    if (post.mediaUrl.endsWith('.mp4') || post.mediaUrl.endsWith('.mov') || post.mediaUrl.includes('video')) {
+                        mediaContent = `<video controls class="w-full mb-4 neubrutalism">
+                            <source src="${post.mediaUrl}" type="video/mp4">
+                        </video>`;
+                    } else {
+                        mediaContent = `<img src="${post.mediaUrl}" class="w-full mb-4 neubrutalism object-cover">`;
+                    }
+                }
+
+                const deleteButton = post.username === currentUser.username ? 
+                    `<button onclick="deletePost('${post._id}')" class="text-red-500">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>` : '';
+
+                const timestamp = new Date(post.timestamp).toLocaleString();
+
+                postElement.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center cursor-pointer" onclick="viewUserProfile('${post.username}')">
+                            <img src="${profilePic}" alt="${post.username}" class="w-10 h-10 rounded-full mr-3 object-cover neubrutalism">
+                            <div>
+                                <div class="font-bold">${post.username}</div>
+                                <div class="text-xs text-gray-500">${timestamp}</div>
+                            </div>
+                        </div>
+                        ${deleteButton}
+                    </div>
+                    ${mediaContent}
+                    <p class="mb-4">${post.content}</p>
+                    <div class="flex items-center space-x-4 mb-4">
+                        <button onclick="toggleLike('${post._id}')" class="flex items-center">
+                            <i class="bi ${post.likes && post.likes.includes(currentUser.username) ? 'bi-heart-fill text-red-500' : 'bi-heart'} text-xl mr-1"></i>
+                            <span>${post.likes ? post.likes.length : 0}</span>
+                        </button>
+                        <button onclick="showComments('${post._id}')" class="flex items-center">
+                            <i class="bi bi-chat text-xl mr-1"></i>
+                            <span>${post.comments ? post.comments.length : 0}</span>
+                        </button>
+                    </div>
+                    <div id="comments-${post._id}" class="hidden mt-4">
+                        <div class="comments-container mb-4">
+                            ${(post.comments || []).map(comment => `
+                                <div class="bg-gray-100 p-3 mb-2 neubrutalism">
+                                    <div class="flex items-center mb-1">
+                                        <strong class="cursor-pointer" onclick="viewUserProfile('${comment.username}')">${comment.username}:</strong>
+                                        <span class="text-xs text-gray-500 ml-2">${new Date(comment.timestamp).toLocaleString()}</span>
+                                    </div>
+                                    <div>${comment.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="flex">
+                            <input type="text" placeholder="Add a comment..." 
+                                id="comment-input-${post._id}"
+                                class="flex-1 p-2 border neubrutalism">
+                            <button onclick="addComment('${post._id}')" 
+                                class="ml-2 btn-primary p-2 neubrutalism">
+                                Post
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(postElement);
+            } catch (error) {
+                console.error('Render post error:', error);
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('Are you sure you want to delete this post?')) return;
+
+            showLoading();
+            try {
+                // First get the post to check for media URL
+                const getPostResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'posts',
+                        id: postId
+                    })
+                });
+
+                const postData = await getPostResponse.json();
+                const post = postData.result && postData.result.length > 0 ? postData.result[0] : null;
+                
+                // Delete post from database
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'delete',
+                        collection: 'posts',
+                        id: postId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    // If post had media, could delete it here from storage if necessary
+                    alert('Post deleted successfully');
+                    loadFeed();
+                    if (document.getElementById('profileModal').classList.contains('block')) {
+                        loadUserPosts(currentUser.username);
+                    }
+                } else {
+                    alert('Failed to delete post');
+                }
+            } catch (error) {
+                console.error('Delete post error:', error);
+                alert('An error occurred while deleting the post');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Profile Functions
+        async function showProfile() {
+            showLoading();
+            try {
+                // Get latest user data
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'users',
+                        conditions: { username: currentUser.username }
+                    })
+                });
+
+                const data = await response.json();
+                if (data.result && data.result.length > 0) {
+                    currentUser = data.result[0];
+                    document.getElementById('profileUsername').textContent = currentUser.username;
+                    document.getElementById('followerCount').textContent = currentUser.followers ? currentUser.followers.length : 0;
+                    document.getElementById('followingCount').textContent = currentUser.following ? currentUser.following.length : 0;
+                    
+                    if (currentUser.profilePicture) {
+                        document.getElementById('currentProfilePic').src = currentUser.profilePicture;
+                    } else {
+                        document.getElementById('currentProfilePic').src = 'https://via.placeholder.com/150';
+                    }
+
+                    // Load user posts
+                    await loadUserPosts(currentUser.username);
+                    
+                    document.getElementById('profileModal').classList.remove('hidden');
+                    document.getElementById('profileModal').classList.add('block');
+                    document.getElementById('updateProfilePicForm').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Show profile error:', error);
+                alert('Failed to load profile information');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadUserPosts(username) {
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'posts',
+                        conditions: { username }
+                    })
+                });
+
+                const data = await response.json();
+                const postsContainer = username === currentUser.username ? 
+                    document.getElementById('userPosts') : 
+                    document.getElementById('viewedUserPosts');
+                
+                postsContainer.innerHTML = '';
+
+                if (data.result && data.result.length > 0) {
+                    // Sort posts by timestamp (newest first)
+                    data.result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    for (const post of data.result) {
+                        await renderUserPost(post, postsContainer, username);
+                    }
+                } else {
+                    postsContainer.innerHTML = `
+                        <div class="text-center p-4">
+                            <p>No posts yet.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Load user posts error:', error);
+            }
+        }
+
+        async function renderUserPost(post, container, username) {
+            const isCurrentUser = username === currentUser.username;
+            const postElement = document.createElement('div');
+            postElement.className = 'post-container p-4';
+            
+            let mediaContent = '';
+            if (post.mediaUrl) {
+                if (post.mediaUrl.endsWith('.mp4') || post.mediaUrl.endsWith('.mov') || post.mediaUrl.includes('video')) {
+                    mediaContent = `<video controls class="w-full mb-3 neubrutalism">
+                        <source src="${post.mediaUrl}" type="video/mp4">
+                    </video>`;
+                } else {
+                    mediaContent = `<img src="${post.mediaUrl}" class="w-full h-48 object-cover mb-3 neubrutalism">`;
+                }
+            }
+
+            const deleteButton = isCurrentUser ? 
+                `<button onclick="deletePost('${post._id}')" class="text-red-500">
+                    <i class="bi bi-trash"></i> Delete
+                </button>` : '';
+
+            const timestamp = new Date(post.timestamp).toLocaleString();
+
+            postElement.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <div class="text-xs text-gray-500">${timestamp}</div>
+                    ${deleteButton}
+                </div>
+                ${mediaContent}
+                <p class="mb-3 line-clamp-3">${post.content}</p>
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center">
+                        <i class="bi ${post.likes && post.likes.includes(currentUser.username) ? 'bi-heart-fill text-red-500' : 'bi-heart'} mr-1"></i>
+                        <span>${post.likes ? post.likes.length : 0}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="bi bi-chat mr-1"></i>
+                        <span>${post.comments ? post.comments.length : 0}</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(postElement);
+        }
+
+        function showUpdateProfilePic() {
+            document.getElementById('updateProfilePicForm').classList.toggle('hidden');
+        }
+
+        async function updateProfilePic() {
+            showLoading();
+            const profilePicFile = document.getElementById('newProfilePic').files[0];
+            
+            if (!profilePicFile) {
+                alert('Please select an image');
+                hideLoading();
+                return;
+            }
+
+            try {
+                // Upload new profile picture
+                const formData = new FormData();
+                formData.append('file', profilePicFile);
+                formData.append('userId', currentUser.username);
+                formData.append('appSlug', appSlug);
+
+                const uploadResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/storage/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2'
+                    },
+                    body: formData
+                });
+
+                const uploadData = await uploadResponse.json();
+                if (uploadData.success) {
+                    // Check for inappropriate content
+                    const aiResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            messages: [{
+                                role: "user",
+                                content: [{
+                                    type: "text",
+                                    text: "Check if this image contains any inappropriate content, nudity, violence, or harmful material"
+                                }, {
+                                    type: "image_url",
+                                    image_url: { url: uploadData.url }
+                                }]
+                            }]
+                        })
+                    });
+
+                    const aiData = await aiResponse.json();
+                    if (aiData.message.toLowerCase().includes('inappropriate') || 
+                        aiData.message.toLowerCase().includes('nudity') || 
+                        aiData.message.toLowerCase().includes('violence')) {
+                        alert('Warning: Inappropriate content detected. Profile picture cannot be updated.');
+                        hideLoading();
+                        return;
+                    }
+
+                    // Update profile picture in database
+                    const updateResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appSlug,
+                            action: 'update',
+                            collection: 'users',
+                            id: currentUser._id,
+                            data: { profilePicture: uploadData.url }
+                        })
+                    });
+
+                    const updateData = await updateResponse.json();
+                    if (updateData.success) {
+                        currentUser.profilePicture = uploadData.url;
+                        document.getElementById('currentProfilePic').src = uploadData.url;
+                        document.getElementById('newProfilePic').value = '';
+                        document.getElementById('newProfilePicPreview').classList.add('hidden');
+                        document.getElementById('updateProfilePicForm').classList.add('hidden');
+                        alert('Profile picture updated successfully');
+                    } else {
+                        alert('Failed to update profile picture');
+                    }
+                } else {
+                    alert('Failed to upload profile picture');
+                }
+            } catch (error) {
+                console.error('Update profile pic error:', error);
+                alert('An error occurred while updating your profile picture');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Social Functions
+        async function toggleLike(postId) {
+            showLoading();
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'posts',
+                        id: postId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.result && data.result.length > 0) {
+                    const post = data.result[0];
+                    const likes = post.likes || [];
+                    const userIndex = likes.indexOf(currentUser.username);
+                    
+                    if (userIndex === -1) {
+                        likes.push(currentUser.username);
+                    } else {
+                        likes.splice(userIndex, 1);
+                    }
+
+                    const updateResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appSlug,
+                            action: 'update',
+                            collection: 'posts',
+                            id: postId,
+                            data: { likes }
+                        })
+                    });
+
+                    if (updateResponse.ok) {
+                        loadFeed();
+                    }
+                }
+            } catch (error) {
+                console.error('Toggle like error:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function addComment(postId) {
+            const commentText = document.getElementById(`comment-input-${postId}`).value;
+            if (!commentText.trim()) return;
+
+            showLoading();
+            try {
+                // Check for inappropriate content in comment
+                const contentCheckResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: "user",
+                            content: [{
+                                type: "text",
+                                text: `Check if this comment contains inappropriate or offensive content: "${commentText}". Respond only with 'appropriate' if the text is safe, or describe what inappropriate content is detected.`
+                            }]
+                        }]
+                    })
+                });
+
+                const contentCheckData = await contentCheckResponse.json();
+                const contentCheckMessage = contentCheckData.message.toLowerCase();
+                
+                if (contentCheckMessage !== 'appropriate' && 
+                    (contentCheckMessage.includes('inappropriate') || 
+                    contentCheckMessage.includes('harmful') || 
+                    contentCheckMessage.includes('offensive'))) {
+                    alert('Warning: Inappropriate language detected. Comment cannot be posted.');
+                    hideLoading();
+                    return;
+                }
+
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'posts',
+                        id: postId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.result && data.result.length > 0) {
+                    const post = data.result[0];
+                    const comments = post.comments || [];
+                    comments.push({
+                        username: currentUser.username,
+                        text: commentText,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    const updateResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appSlug,
+                            action: 'update',
+                            collection: 'posts',
+                            id: postId,
+                            data: { comments }
+                        })
+                    });
+
+                    if (updateResponse.ok) {
+                        document.getElementById(`comment-input-${postId}`).value = '';
+                        loadFeed();
+                    }
+                }
+            } catch (error) {
+                console.error('Add comment error:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Search users
+        document.getElementById('searchUser').addEventListener('input', async function(e) {
+            const searchTerm = e.target.value;
+            const searchResults = document.getElementById('searchResults');
+            
+            if (searchTerm.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'users',
+                        conditions: {
+                            username: { $regex: searchTerm, $options: 'i' }
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                searchResults.innerHTML = '';
+                
+                if (data.result && data.result.length > 0) {
+                    searchResults.classList.remove('hidden');
+                    
+                    data.result.forEach(user => {
+                        if (user.username === currentUser.username) return;
+                        
+                        const userElement = document.createElement('div');
+                        userElement.className = 'p-2 hover:bg-gray-100 cursor-pointer flex items-center';
+                        userElement.innerHTML = `
+                            <img src="${user.profilePicture || 'https://via.placeholder.com/150'}" 
+                                alt="${user.username}" 
+                                class="w-8 h-8 rounded-full mr-2 object-cover">
+                            <span>${user.username}</span>
+                        `;
+                        userElement.onclick = () => {
+                            viewUserProfile(user.username);
+                            searchResults.classList.add('hidden');
+                            document.getElementById('searchUser').value = '';
+                        };
+                        searchResults.appendChild(userElement);
+                    });
+                } else {
+                    searchResults.classList.remove('hidden');
+                    searchResults.innerHTML = '<div class="p-2">No users found</div>';
+                }
+            } catch (error) {
+                console.error('Search users error:', error);
+            }
+        });
+
+        // Click outside search results to close
+        document.addEventListener('click', function(event) {
+            const searchResults = document.getElementById('searchResults');
+            const searchInput = document.getElementById('searchUser');
+            
+            if (!searchResults.contains(event.target) && event.target !== searchInput) {
+                searchResults.classList.add('hidden');
+            }
+        });
+
+        async function viewUserProfile(username) {
+            if (username === currentUser.username) {
+                showProfile();
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'users',
+                        conditions: { username }
+                    })
+                });
+
+                const data = await response.json();
+                if (data.result && data.result.length > 0) {
+                    const user = data.result[0];
+                    currentViewedUser = user;
+                    
+                    document.getElementById('userProfileName').textContent = user.username;
+                    document.getElementById('userFollowerCount').textContent = user.followers ? user.followers.length : 0;
+                    document.getElementById('userFollowingCount').textContent = user.following ? user.following.length : 0;
+                    
+                    if (user.profilePicture) {
+                        document.getElementById('userProfilePic').src = user.profilePicture;
+                    } else {
+                        document.getElementById('userProfilePic').src = 'https://via.placeholder.com/150';
+                    }
+
+                    // Set follow button text
+                    const isFollowing = user.followers && user.followers.includes(currentUser.username);
+                    const followBtn = document.getElementById('followToggleBtn');
+                    followBtn.textContent = isFollowing ? 'Unfollow' : 'Follow';
+                    followBtn.className = isFollowing ? 'btn-danger p-2 neubrutalism' : 'btn-primary p-2 neubrutalism';
+
+                    // Load user posts
+                    await loadUserPosts(username);
+                    
+                    document.getElementById('userProfileModal').classList.remove('hidden');
+                    document.getElementById('userProfileModal').classList.add('block');
+                }
+            } catch (error) {
+                console.error('View user profile error:', error);
+                alert('Failed to load user profile');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function toggleFollow() {
+            if (!currentViewedUser) return;
+            
+            showLoading();
+            try {
+                // Get fresh data for both users
+                const viewedUserResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'users',
+                        conditions: { username: currentViewedUser.username }
+                    })
+                });
+                
+                const currentUserResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: 'read',
+                        collection: 'users',
+                        conditions: { username: currentUser.username }
+                    })
+                });
+
+                const viewedUserData = await viewedUserResponse.json();
+                const currentUserData = await currentUserResponse.json();
+                
+                if (viewedUserData.result && viewedUserData.result.length > 0 && 
+                    currentUserData.result && currentUserData.result.length > 0) {
+                    
+                    const viewedUser = viewedUserData.result[0];
+                    const updatedCurrentUser = currentUserData.result[0];
+                    
+                    // Update followers and following arrays
+                    let viewedUserFollowers = viewedUser.followers || [];
+                    let currentUserFollowing = updatedCurrentUser.following || [];
+                    
+                    const isFollowing = viewedUserFollowers.includes(currentUser.username);
+                    
+                    if (isFollowing) {
+                        // Unfollow
+                        viewedUserFollowers = viewedUserFollowers.filter(username => username !== currentUser.username);
+                        currentUserFollowing = currentUserFollowing.filter(username => username !== viewedUser.username);
+                    } else {
+                        // Follow
+                        viewedUserFollowers.push(currentUser.username);
+                        currentUserFollowing.push(viewedUser.username);
+                    }
+                    
+                    // Update viewed user's followers
+                    await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appSlug,
+                            action: 'update',
+                            collection: 'users',
+                            id: viewedUser._id,
+                            data: { followers: viewedUserFollowers }
+                        })
+                    });
+                    
+                    // Update current user's following
+                    await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer cR0B7wyVLcbjtIyuwRyQp7R3y2r2',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appSlug,
+                            action: 'update',
+                            collection: 'users',
+                            id: updatedCurrentUser._id,
+                            data: { following: currentUserFollowing }
+                        })
+                    });
+                    
+                    // Update UI
+                    currentUser = updatedCurrentUser;
+                    currentUser.following = currentUserFollowing;
+                    currentViewedUser = viewedUser;
+                    currentViewedUser.followers = viewedUserFollowers;
+                    
+                    document.getElementById('userFollowerCount').textContent = viewedUserFollowers.length;
+                    
+                    const followBtn = document.getElementById('followToggleBtn');
+                    followBtn.textContent = isFollowing ? 'Follow' : 'Unfollow';
+                    followBtn.className = isFollowing ? 'btn-primary p-2 neubrutalism' : 'btn-danger p-2 neubrutalism';
+                }
+            } catch (error) {
+                console.error('Toggle follow error:', error);
+                alert('Failed to update follow status');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showComments(postId) {
+            document.getElementById(`comments-${postId}`).classList.toggle('hidden');
+        }
+
+        function closeProfile() {
+            document.getElementById('profileModal').classList.remove('block');
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function closeUserProfile() {
+            document.getElementById('userProfileModal').classList.remove('block');
+            document.getElementById('userProfileModal').classList.add('hidden');
+            currentViewedUser = null;
+        }
+
+        // UI Helper Functions
+        function toggleAuth() {
+            document.getElementById('loginForm').classList.toggle('hidden');
+            document.getElementById('registerForm').classList.toggle('hidden');
+        }
+
+        function showCreatePost() {
+            document.getElementById('createPostModal').classList.remove('hidden');
+            document.getElementById('postContent').value = '';
+            document.getElementById('mediaUpload').value = '';
+            document.getElementById('imagePreview').classList.add('hidden');
+        }
+
+        function closeCreatePost() {
+            document.getElementById('createPostModal').classList.add('hidden');
+            document.getElementById('postContent').value = '';
+            document.getElementById('mediaUpload').value = '';
+            document.getElementById('imagePreview').classList.add('hidden');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to log out?')) {
+                currentUser = null;
+                document.getElementById('authContainer').classList.remove('hidden');
+                document.getElementById('appContainer').classList.add('hidden');
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+            }
+        }
+
+        // File Preview Functions
+        document.getElementById('mediaUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('profilePicUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('profileImagePreview');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('newProfilePic').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('newProfilePicPreview');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
